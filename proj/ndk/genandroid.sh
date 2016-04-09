@@ -1,0 +1,1 @@
+cmake -DCMAKE_TOOLCHAIN_FILE=../../cmake/android-cmake/toolchain/android.toolchain.cmake ../..

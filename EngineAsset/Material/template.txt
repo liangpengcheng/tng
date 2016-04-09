@@ -1,0 +1,35 @@
+
+vec4 Diffuse()
+{
+	return vec4(%s);
+}
+vec4 Emissive()
+{
+	return vec4(%s);
+}
+
+vec3 Normal()
+{
+	return vec3(%s);
+}
+vec4 SpecularColor()
+{
+	return vec4(%s);
+}
+float SpecularPower()
+{
+	return float(%s);
+}
+float Opacity()
+{
+	return float(%s);
+}
+
+float Mask()
+{
+	return float(%s);
+}
+vec2 Distortion()
+{
+	return vec2(%s);
+}

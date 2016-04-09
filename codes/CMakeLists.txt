@@ -1,0 +1,10 @@
+subdirs(src)
+if(build_unit_test)
+subdirs(unit_test)
+endif()
+
+if(build_sample)
+subdirs(sample)
+endif()
+subdirs(plugins)
+subdirs(tool)

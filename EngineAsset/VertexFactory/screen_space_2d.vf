@@ -1,0 +1,9 @@
+
+attribute vec4 a_position;
+attribute vec2 a_texcoord;
+
+void main(void)
+{
+	gl_Position =  a_position;
+	texturecoord = a_texcoord;
+}

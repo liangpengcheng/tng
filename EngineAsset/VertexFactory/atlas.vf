@@ -1,0 +1,9 @@
+uniform vec4 atlas_details;//x xstart ,y ystart ,z xend, w yend(0-1)
+attribute vec4 a_position;
+attribute vec2 a_texcoord;
+
+void main(void)
+{
+	gl_Position =  a_position;
+	texturecoord = a_texcoord;
+}

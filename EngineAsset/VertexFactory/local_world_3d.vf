@@ -1,0 +1,8 @@
+uniform mat4 mvp_matrix;
+attribute vec4 a_position;
+attribute vec2 a_texcoord;
+void main()
+{
+	gl_Position =  a_position *mvp_matrix ;
+	texturecoord = a_texcoord;
+}

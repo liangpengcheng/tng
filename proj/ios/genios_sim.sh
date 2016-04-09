@@ -1,0 +1,1 @@
+cmake -DCMAKE_TOOLCHAIN_FILE=../../cmake/ios-cmake/toolchain/iOS.cmake -DIOS_PLATFORM=SIMULATOR -GXcode ../../

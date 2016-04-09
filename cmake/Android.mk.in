@@ -1,0 +1,4 @@
+LOCAL_PATH := $(call my-dir)
+    include $(CLEAR_VARS)
+    LOCAL_MODULE    := @ANDROID_MOD_NAME@
+	LOCAL_CFLAGS += -fexceptions -frtti -x c++ -D___ANDROID___ -DANDROID -DZZIP_OMIT_CONFIG_H  

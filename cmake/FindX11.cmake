@@ -1,0 +1,10 @@
+find_package(X11)
+	if(NOT X11_FOUND)
+	  message(STATUS "Failed to find X11")
+	else()
+	 add_definitions(-DTNG_USE_X11=1)
+	 set(link_libs ${link_libs} ${X11_LIBRARIES})
+	 include_directories ( ${X11_INCLUDE_DIR} )
+	 link_directories(${X11_LIBRARY_DIR})
+	endif(NOT X11_FOUND)
+	

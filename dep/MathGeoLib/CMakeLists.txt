@@ -1,0 +1,12 @@
+file(GLOB_RECURSE sourceFiles ./*.cpp)
+file(GLOB_RECURSE headerFiles ./*.h)
+if(WIN32)
+	tng_library(MathGeoLib ${sourceFiles} ${headerFiles})
+else()
+	if(share_library)
+		tng_shared_library(MathGeoLib ${sourceFiles} ${headerFiles})
+	else()
+		tng_library(MathGeoLib ${sourceFiles} ${headerFiles})
+	endif()
+endif()
+

@@ -1,0 +1,28 @@
+{
+	"emissive_only" :true,
+	"depth_write" :true,
+	"expression":{
+		"ParamFloat4Expression":{
+			"name":"ColorExp",
+			"float4_name":"ColorParam",
+			"default":"1,1,1,1"
+		},
+		"TextureSamplerExpression":{
+			"name":"EmissiveExp",
+			"sampler_name":"TextureParam",
+			"default":"engine:/Texture/default.tex"
+		},
+		"MulExpression":{
+			"name":"Tex_Color"
+		}
+	},
+	"emissive":{
+		"Tex_Color":{
+			"ColorExp":{
+			},
+			"EmissiveExp":{
+			}
+		}
+		
+	}
+}

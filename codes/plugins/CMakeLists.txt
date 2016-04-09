@@ -1,0 +1,6 @@
+if(build_gles)
+subdirs(glesrender)
+endif()
+if(build_model_importer)
+subdirs(modelimport)
+endif()

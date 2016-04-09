@@ -1,0 +1,19 @@
+{
+	"emissive_only" :true,
+	"depth_write" :true,
+	"expression":{
+		"ParamFloat4Expression":{
+			"name":"ColorExp",
+			"float4_name":"ColorParam",
+			"default":"1,1,1,1"
+		}
+	},
+	"emissive":{
+		"ColorExp":{
+			"red":true,
+			"green":true,
+			"blue":true,
+			"alpha":true
+		}
+	}
+}

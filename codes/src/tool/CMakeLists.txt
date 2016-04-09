@@ -1,0 +1,5 @@
+if(NOT ANDROID)
+tng_game(ImportTool ModelImport.cpp TextureImport.cpp main.cpp RectangleBinPack.cpp)
+target_link_libraries(ImportTool plugin_gles)
+target_link_libraries(ImportTool plugin_model_imp)
+endif()

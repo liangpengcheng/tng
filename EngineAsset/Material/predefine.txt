@@ -1,0 +1,5 @@
+
+varying lowp vec2	texturecoord;
+varying lowp vec3	tangent_normal;
+varying lowp vec3	reflectvec;
+varying lowp vec3	cameravec;

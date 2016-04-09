@@ -1,0 +1,2 @@
+del cmakecache.txt
+cmake -G"MinGW Makefiles" -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.3 -DANDROID_NATIVE_API_LEVEL=9 -DANDROID_ABI=armeabi-v7a -DCMAKE_TOOLCHAIN_FILE=../../cmake/android-cmake/toolchain/android.toolchain.cmake -DCMAKE_BUILD_TYPE=Debug  -DCMAKE_MAKE_PROGRAM="%ANDROID_NDK%\prebuilt\windows-x86_64\bin\make.exe" ../../
