@@ -4,9 +4,9 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 project(zlib C)
 
 set(VERSION "1.2.8")
+set(ASM686 false)
+set(AMD64 false)
 
-option(ASM686 "Enable building i686 assembly implementation for zlib")
-option(AMD64 "Enable building amd64 assembly implementation for zlib")
 
 #set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
 #set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Installation directory for libraries")

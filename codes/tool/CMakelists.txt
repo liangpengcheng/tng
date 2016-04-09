@@ -38,8 +38,8 @@ if(EXISTS "F:\\Qt\\Qt5.5.0\\5.5\\msvc2013_64\\" AND IS_DIRECTORY "F:\\Qt\\Qt5.5.
 set (CMAKE_PREFIX_PATH "F:\\Qt\\Qt5.5.0\\5.5\\msvc2013_64\\")
 endif()
 endif()
-find_package(Qt5Widgets)	
-if(Qt5Widgets_FOUND)
+find_package(Qt5Core)	
+if(Qt5Core_FOUND)
 set (CMAKE_AUTOMOC ON)
 set(ShipyardSrc ./PackFiles.cpp
 				./Project.cpp
@@ -48,8 +48,13 @@ set(ShipyardHead  ./PackFiles.h
 				./Project.h)
 
 tng_game(Shipyard ${ShipyardSrc} ${ShipyardHead})
+
+
+target_link_libraries(Shipyard 
+	plugin_model_imp 
+	plugin_gles
+	Qt5::WinMain  # <-- New target available via find_package ( Qt5Core )
+	)
+endif() 
 qt5_use_modules(Shipyard Widgets)
 qt5_use_modules(Shipyard UiTools )
-target_link_libraries(Shipyard plugin_gles)
-target_link_libraries(Shipyard plugin_model_imp)
-endif() 

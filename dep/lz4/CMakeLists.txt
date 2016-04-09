@@ -14,8 +14,8 @@ IF( SIZEOF_VOID_P STREQUAL  "8" )
     MESSAGE( STATUS "64 bit architecture detected size of void * is " ${SIZEOF_VOID_P})
 ENDIF()
 
-option(BUILD_TOOLS "Build the command line tools" OFF)
-option(BUILD_LIBS  "Build the libraries in addition to the tools" ON)
+set(BUILD_TOOLS false)
+set(BUILD_LIBS true)
 
 IF(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR
    ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
