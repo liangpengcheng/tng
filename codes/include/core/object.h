@@ -42,10 +42,11 @@ namespace tng
 
 			return (T*)(this);
 		}
+#endif
 
 		virtual void			LoadFromJson(const JsonObject& json);
 		virtual void			SaveToJson(JsonObject& json)const;
-#endif
+
 		void Set(const string& key, const string& value);
 		string Get(const string& key)const;
 		static Object* CreateObject(const string& cname){ return GetDynamicFactory().CreateObject(cname); }

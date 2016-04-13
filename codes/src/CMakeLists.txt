@@ -179,7 +179,6 @@ set(graphics_head	../include/graphics/graphics.h
 					../include/graphics/window.h
 					../include/graphics/graphics_macros.h
 					../include/graphics/scene.h
-					../include/graphics/scene2d.h
 					../include/graphics/scenemanger.h
 					../include/graphics/scenenode.h
 					../include/graphics/scenenode.inl
@@ -202,12 +201,7 @@ set(graphics_head	../include/graphics/graphics.h
 					../include/graphics/pixelformat.h
 					../include/graphics/material_expression.h
 					../include/graphics/material_compiler.h
-					../include/graphics/scenenode2d.h
 					../include/graphics/input.h
-					#../include/graphics/gui_render.h
-					../include/graphics/gui/gui_base.h
-					../include/graphics/gui/image_ctrl.h
-					../include/graphics/gui/atlas.h
 					../include/graphics/pixelformat_desc.h)
 					
 
@@ -215,8 +209,6 @@ set(graphics_src	graphics/graphics.cpp
 					graphics/input.cpp
 					graphics/window.cpp
 					graphics/scene.cpp
-					graphics/scene2d.cpp
-					graphics/scenenode2d.cpp
 					graphics/scenemanger.cpp
 					graphics/scenenode.cpp
 					graphics/render.cpp
@@ -238,10 +230,7 @@ set(graphics_src	graphics/graphics.cpp
 					graphics/platform_android.cpp
 					graphics/platform_win.cpp
 					graphics/platform_unix.cpp
-					graphics/material_compiler.cpp
-					graphics/gui/gui_base.cpp
-					graphics/gui/atlas.cpp
-					graphics/gui/image_ctrl.cpp)
+					graphics/material_compiler.cpp)
 
 if(__TOS_MACOS__)
 					set (${graphics_src} ${graphics_src} graphics/window.mm)
