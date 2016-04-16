@@ -1,0 +1,12 @@
+set(nano_plug nanovg_plugin.h nanovg_plugin.cpp)
+if(WIN32)
+	tng_library(plugin_nano ${nano_plug} )
+else()
+	if(share_library)
+		tng_shared_library(plugin_nano ${nano_plug})
+	else()
+		tng_library(plugin_nano ${nano_plug} )
+	endif()
+endif()
+
+target_link_libraries(plugin_nano graphics)

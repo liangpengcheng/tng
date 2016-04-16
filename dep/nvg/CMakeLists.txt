@@ -1,0 +1,12 @@
+file(GLOB_RECURSE sourceFiles ./*.c)
+file(GLOB_RECURSE headerFiles ./*.h)
+if(WIN32)
+	tng_library(nanovg ${sourceFiles} ${headerFiles})
+else()
+	if(share_library)
+		tng_shared_library(nanovg ${sourceFiles} ${headerFiles})
+	else()
+		tng_library(nanovg ${sourceFiles} ${headerFiles})
+	endif()
+endif()
+
