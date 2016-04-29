@@ -42,7 +42,7 @@ namespace tng
 		texture_head				head_;
 	};
 	typedef AutoPtr<TextureBase>	TexturePtr;
-	class GFX_API TextureData 
+	class GFX_API TextureData :public RefCountedObject
 	{
 	public:
 		TextureData();
@@ -75,7 +75,7 @@ namespace tng
 	protected:
 		u32					render_tex_;
 	};
-
+	typedef AutoPtr<TextureData>	TextureDataPtr;
 	FORCEINLINE void TextureData::LoadConfig(JsonObject* cfg)
 	{
 		if(cfg)
@@ -101,13 +101,13 @@ namespace tng
 		~TextureResource();
 		void				Load(std::istream& stream);
 		void				Save(std::ostream& stream);
-		TextureData*		GetData(){return &data_;}
+		TextureDataPtr		GetData(){return data_;}
 		u32					GetTexture()const{
-			return data_.GetTexture();
+			return data_->GetTexture();
 		}
 	protected:
 		
-		TextureData			data_;
+		TextureDataPtr			data_;
 	};
 
 	class GFX_API FileTexture:public TextureBase

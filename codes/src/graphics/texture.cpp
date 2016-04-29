@@ -8,11 +8,14 @@ namespace tng
 {
 	void TextureResource::Load(std::istream& stream)
 	{
-		data_.Load(stream);
+		if (data_.isNull()){
+			data_ = TextureDataPtr(new TextureData());
+		}
+		data_->Load(stream);
 	}
 	void TextureResource::Save(std::ostream& stream)
 	{
-		data_.Save(stream);
+		data_->Save(stream);
 	}
 	TextureData::TextureData():raw_(NULL)
 #ifndef NO_RENDER_THREAD
