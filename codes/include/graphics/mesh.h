@@ -83,7 +83,7 @@ namespace tng
 		ShaderParam										mtl_param_;
 		bool											has_emissive_;
 		bool											has_diffuse_;
-		void			render(RenderPass pass, const float3x4 view_mat, const float4x4& proj_mat);
+		void			render(RenderPass pass, const float3x4& view_mat, const float4x4& proj_mat);
 	};
 
 	class RenderLayer

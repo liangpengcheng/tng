@@ -480,7 +480,7 @@ namespace tng
 	{
 		internal::GetRender()->_drawMesh(this);
 	}
-	void RenderElem::render(RenderPass pass, const float3x4 view_mat, const float4x4& proj_mat)
+	void RenderElem::render(RenderPass pass, const float3x4& view_mat, const float4x4& proj_mat)
 	{
 		HardwareMesh* mesh = internal::GetRenderService()->GetMesh(mesh_.meshid);
 		std::unordered_map<RenderPass, MaterialRender>::iterator it = mtl_.find(pass);
