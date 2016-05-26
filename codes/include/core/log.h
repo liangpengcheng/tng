@@ -4,6 +4,7 @@
 #include "core/types.h"
 #include <string>
 #include <iostream>
+#include "threadfun.h"
 namespace tng
 {
 	class CORE_API Log
@@ -30,6 +31,7 @@ namespace tng
 	protected:
 		virtual void	Output(const char* msg, Log::CHANNEL ch) = 0;
 		static Log*		global_log_;
+		Mutex			mutex_;
 	};
 
 	class CORE_API ConsoleLog :public Log

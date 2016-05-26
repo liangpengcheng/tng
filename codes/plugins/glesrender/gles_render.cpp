@@ -101,9 +101,9 @@ namespace tng
 	}
 	void GLESRender::SetViewport(const Rect& rect)
 	{
-		Assert(rect.right-rect.left>0&&
-			rect.bottom-rect.top>0);
-		GL_ASSERT(glViewport(rect.left,rect.top,rect.right-rect.left,rect.bottom-rect.top));
+		if(rect.right-rect.left>0&&
+			rect.bottom-rect.top>0)
+			GL_ASSERT(glViewport(rect.left,rect.top,rect.right-rect.left,rect.bottom-rect.top));
 	}
 	void GLESRender::ClearDepth(f32 depth,bool ime)
 	{

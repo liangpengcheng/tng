@@ -26,6 +26,7 @@ namespace tng
 	}
 
 	void Log::Printf(Log::CHANNEL ch, const char* fmt, ...){
+		AutoLock<Mutex> al(&mutex_);
 		if (ch&log_channel_mask_)
 		{
 			int n, size = 128;

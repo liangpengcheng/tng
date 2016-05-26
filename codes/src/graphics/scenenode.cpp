@@ -45,7 +45,7 @@ namespace tng
 				return RETURN_NAME_DUPLICATE;
 		else
 		{
-			scene_objects_.insert(std::pair<string,AutoPtr<LinkedNode> >(node_name,NodePtr(pnode)));
+			scene_objects_.insert(std::pair<string,AutoPtr<LinkedNode> >(node_name,NodePtr(pnode,true)));
 			pnode->father_ = this;
 			return RETURN_SUCCESS;
 		}

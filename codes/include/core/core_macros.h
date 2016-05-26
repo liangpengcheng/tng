@@ -23,11 +23,14 @@
 #endif // SAFE_RELEASE
 
 #define SAFE_DELETE(x) if(x)\
-	delete x;
+	delete x;\
+	x = NULL;
 #define SAFE_DELETE_ARRAY(x) if(x)\
-	delete []x;
+	delete []x;\
+	x = NULL;
 #define SAFE_RELEASE(x) if(x)\
-	x->Release();
+	x->Release();\
+	x = NULL;
 
 #ifndef FORCEINLINE
 #if defined(_MSC_VER)

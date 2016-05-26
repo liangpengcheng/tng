@@ -1,4 +1,5 @@
 #pragma once
+#include "core_exports.h"
 #include "config.h"
 #ifndef NO_LIBUV
 extern "C"
@@ -13,7 +14,7 @@ extern "C"
 //#include "core/functor.h"
 #include "core/delegate.h"
 #include "core/memobj.h"
-#include "core/runtime_check.h"
+
 
 #if TNG_OS== TNG_OS_MAC_OS_X
 #include <libkern/OSAtomic.h>
@@ -173,7 +174,7 @@ namespace tng
 		Thread(ThreadFun fun, void* thread_param) :function_(fun), param_(thread_param) {
 			try
 			{
-				Assert(createThread());
+				createThread();
 			}
 			catch (...)
 			{
