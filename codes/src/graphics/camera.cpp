@@ -20,7 +20,7 @@ namespace tng
 	{
 		UpdateDirty();
 #ifdef MATH_VEC_IS_FLOAT4
-		frustum_.front.Float3Part() = pos - frustum_.pos.Float3Part();
+		frustum_.front = vec(pos - frustum_.pos.Float3Part(),0);
 		frustum_.front.Normalize();
 		SetLookDir(frustum_.front.Float3Part(),up);
 #else
@@ -35,8 +35,8 @@ namespace tng
 	{
 		UpdateDirty();
 #ifdef MATH_VEC_IS_FLOAT4
-		frustum_.front.Float3Part() = dir;
-		frustum_.up.Float3Part() = up;
+		frustum_.front =vec( dir,0);
+		frustum_.up=vec( up,0);
 #else
 		frustum_.front = dir;
 		frustum_.up = up;
