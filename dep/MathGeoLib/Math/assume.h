@@ -47,7 +47,7 @@
 // #define MATH_ASSERT_ON_ASSUME - the assume() macro resolves to the assert() macro.
 // #define MATH_DISABLE_ASSUME   - the assume() macro is silent, and disabled altogether. (no prints or breaks or anything, the checks by assume() are ignored)
 // If neither of the above is defined (default), then
-//  - WIN32: if MathBreakOnAssume() == true, the system will break to debugger using a call to DebugBreak().
+//  - _WIN32: if MathBreakOnAssume() == true, the system will break to debugger using a call to DebugBreak().
 //  - Other: if MathBreakOnAssume() == true, the assume() macro is equal to the assert() macro.
 //  -   All: if MathBreakOnAssume() == false, the assume() macro uses printf() to log warnings of failed math-related assumptions.
 

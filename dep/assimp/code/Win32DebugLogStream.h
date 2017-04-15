@@ -1,7 +1,7 @@
 #ifndef AI_WIN32DEBUGLOGSTREAM_H_INC
 #define AI_WIN32DEBUGLOGSTREAM_H_INC
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include "../include/assimp/LogStream.hpp"
 #include "windows.h"
@@ -46,5 +46,5 @@ inline void Win32DebugLogStream::write(const char* message)
 // ---------------------------------------------------------------------------
 }	// Namespace Assimp
 
-#endif // ! WIN32
+#endif // ! _WIN32
 #endif // guard

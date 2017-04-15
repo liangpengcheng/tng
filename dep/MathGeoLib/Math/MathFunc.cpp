@@ -25,7 +25,7 @@
 #include "myassert.h"
 #include "float2.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #endif
 
@@ -52,7 +52,7 @@ bool AssumeFailed()
 {
 	if (mathBreakOnAssume)
 	{
-#if defined(WIN32) && !defined(WIN8RT) // Win8 metro apps don't have DebugBreak.
+#if defined(_WIN32) && !defined(WIN8RT) // Win8 metro apps don't have DebugBreak.
 		DebugBreak();
 #endif
 	}

@@ -17,7 +17,7 @@
 	@brief 2D integral axis-aligned rectangle, equivalent to RECT in Windows API. */
 #pragma once
 
-#ifdef WIN32
+#ifdef _WIN32
 #define Polygon Polygon_unused
 #include <Windows.h> // For DebugBreak();
 #undef Polygon
@@ -42,7 +42,7 @@ public:
 	int right;
 	int bottom;
 
-#ifdef WIN32
+#ifdef _WIN32
 	operator RECT()
 	{
 		RECT r;

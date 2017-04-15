@@ -3,3 +3,20 @@
 ################################################################################
 
 /vs17
+/Windows_x86_64_vc14_Debug_bin
+/x64/Debug/ZERO_CHECK
+/Windows_x86_64_vc14_Debug_lib
+/Windows_x86_64_vc14_Debug_lib/unzip.lib
+/Windows_x86_64_vc14_Debug_lib/resource.lib
+/Windows_x86_64_vc14_Debug_lib/resource.exp
+/Windows_x86_64_vc14_Debug_lib/plugin_gles.lib
+/Windows_x86_64_vc14_Debug_lib/plugin_gles.exp
+/Windows_x86_64_vc14_Debug_lib/MathGeoLib.lib
+/Windows_x86_64_vc14_Debug_lib/lz4.lib
+/Windows_x86_64_vc14_Debug_lib/graphics.lib
+/Windows_x86_64_vc14_Debug_lib/graphics.exp
+/Windows_x86_64_vc14_Debug_lib/GLEW.lib
+/Windows_x86_64_vc14_Debug_lib/engine.lib
+/Windows_x86_64_vc14_Debug_lib/engine.exp
+/Windows_x86_64_vc14_Debug_lib/core.lib
+/Windows_x86_64_vc14_Debug_lib/core.exp

@@ -22,7 +22,7 @@
 #include <sys/time.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -40,7 +40,7 @@
 
 MATH_BEGIN_NAMESPACE
 
-#ifdef WIN32
+#ifdef _WIN32
 LARGE_INTEGER Clock::ddwTimerFrequency;
 #endif
 
@@ -57,7 +57,7 @@ void Clock::InitClockData()
 	if (appStartTime == 0)
 		appStartTime = Tick();
 
-#ifdef WIN32
+#ifdef _WIN32
 	if (!QueryPerformanceFrequency(&ddwTimerFrequency))
 	{
 		LOGE("The system doesn't support high-resolution timers!");
@@ -101,7 +101,7 @@ void Clock::Sleep(int milliseconds)
 {
 #ifdef WIN8RT
 #pragma warning(Clock::Sleep has not been implemented!)
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	::Sleep(milliseconds);
 #elif !defined(__native_client__) && !defined(EMSCRIPTEN)
 	// http://linux.die.net/man/2/nanosleep
@@ -118,7 +118,7 @@ void Clock::Sleep(int milliseconds)
 
 int Clock::Year()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	SYSTEMTIME s;
 	GetSystemTime(&s);
 	return s.wYear;
@@ -130,7 +130,7 @@ int Clock::Year()
 
 int Clock::Month()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	SYSTEMTIME s;
 	GetSystemTime(&s);
 	return s.wMonth;
@@ -142,7 +142,7 @@ int Clock::Month()
 
 int Clock::Day()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	SYSTEMTIME s;
 	GetSystemTime(&s);
 	return s.wDay;
@@ -154,7 +154,7 @@ int Clock::Day()
 
 int Clock::Hour()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	SYSTEMTIME s;
 	GetSystemTime(&s);
 	return s.wHour;
@@ -166,7 +166,7 @@ int Clock::Hour()
 
 int Clock::Min()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	SYSTEMTIME s;
 	GetSystemTime(&s);
 	return s.wMinute;
@@ -178,7 +178,7 @@ int Clock::Min()
 
 int Clock::Sec()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	SYSTEMTIME s;
 	GetSystemTime(&s);
 	return s.wSecond;
@@ -190,7 +190,7 @@ int Clock::Sec()
 
 unsigned long Clock::SystemTime()
 {
-#ifdef WIN32
+#ifdef _WIN32
 #if WINVER >= 0x0600 /* Vista or newer */ && !defined(MATH_ENABLE_WINXP_SUPPORT)
 	return (unsigned long)GetTickCount64();
 #else
@@ -236,7 +236,7 @@ tick_t Clock::Tick()
 	return (tick_t)(((double)emscripten_get_now()) * 1e3);
 #endif
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	LARGE_INTEGER ddwTimer;
 	BOOL success = QueryPerformanceCounter(&ddwTimer);
 	assume(success != 0);
@@ -259,7 +259,7 @@ tick_t Clock::Tick()
 
 unsigned long Clock::TickU32()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	LARGE_INTEGER ddwTimer;
 	BOOL success = QueryPerformanceCounter(&ddwTimer);
 	assume(success != 0);
@@ -282,7 +282,7 @@ tick_t Clock::TicksPerSec()
 	return 1000000ULL; // 1e6 == microseconds.
 #endif
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	return ddwTimerFrequency.QuadPart;
 #elif defined(__APPLE__)
 	return ticksPerSecond;

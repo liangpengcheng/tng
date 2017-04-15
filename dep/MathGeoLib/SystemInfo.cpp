@@ -69,7 +69,7 @@ std::string FindLine(const std::string &inStr, const char *lineStart)
 
 #endif
 
-#if defined(WIN32) && !defined(WIN8RT)
+#if defined(_WIN32) && !defined(WIN8RT)
 
 #include <windows.h>
 #include <iphlpapi.h>

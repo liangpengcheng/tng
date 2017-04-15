@@ -33,7 +33,7 @@
 #include <arm_neon.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define Polygon Polygon_unused
 #include <Windows.h> // For DebugBreak();
 #undef Polygon

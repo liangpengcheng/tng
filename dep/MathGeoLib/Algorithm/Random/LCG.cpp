@@ -81,7 +81,7 @@ u32 LCG::Int()
 	// Currently we cast everything to 64-bit to avoid overflow, which is quite dumb.
 
 	// Create the new random number
-//#ifdef WIN32
+//#ifdef _WIN32
 	u64 newNum = ((u64)lastNumber * (u64)multiplier + (u64)increment) % (u64)modulus;
 //	u32 m = lastNumber * multiplier;
 //	u32 i = m + increment;
