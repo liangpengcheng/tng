@@ -1,4 +1,3 @@
-
 #include "engine/thread_pool.h"
 #include "core/os.h"
 namespace tng
@@ -6,9 +5,6 @@ namespace tng
 	ThreadPool::~ThreadPool()
 	{
 		Quit();
-#if !defined(NO_LIBUV)&&!defined(EMCC)
-		task_cond_.notify_all();
-#endif
 		for (s32 i=0;i<threads_.size();i++)
 		{
 			threads_[i]->Join();
@@ -29,9 +25,7 @@ namespace tng
 		task_lock_.lock();
 		task_.push_back(t);
 		task_lock_.unlock();
-#if !defined(NO_LIBUV)&&!defined(EMCC)
 		task_cond_.notify_once();
-#endif
 	}
 
 	void ThreadPool::asyncTask(void* param)
@@ -45,13 +39,7 @@ namespace tng
 				s32 sz = (s32)pool->task_.size();
 				if (sz==0)
 				{
-#if !defined(NO_LIBUV)&&!defined(EMCC)
-				
 					pool->task_cond_.wait(pool->task_lock_);
-				
-#else
-					OS::Sleep(.01f);
-#endif
 				}
 				if (pool->task_.size()==0)
 				{
@@ -82,5 +70,27 @@ namespace tng
 		}
 		done_.clear();
 		done_lock_.unlock();
+	}
+
+	void ThreadPool::Create(int thread_count)
+	{
+		if (thread_count <= 0)
+			thread_count = std::thread::hardware_concurrency();
+		thread_count_ = thread_count;
+		threads_.resize(thread_count_);
+		for (int i = 0; i < thread_count_; i++)
+		{
+			threads_[i] = std::thread(&ThreadPool::Run, this);
+		}
+	}
+
+	void ThreadPool::Destroy()
+	{
+		for (int i = 0; i < thread_count_; i++)
+		{
+			if (threads_[i].joinable())
+				threads_[i].join();
+		}
+		threads_.clear();
 	}
 }

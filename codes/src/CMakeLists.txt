@@ -1,66 +1,71 @@
 #core project
-include_directories(../../dep/uv/include ../../dep/uv/include/uv-private ../../dep/uv/src)
-set(UV_COMMON_SRCS
-    ../../dep/uv/src/uv-common.c
-    )
+# Remove libuv includes
+# include_directories(../../dep/uv/include ../../dep/uv/include/uv-private ../../dep/uv/src)
 
+# Remove UV source files
+# set(UV_COMMON_SRCS
+#     ../../dep/uv/src/uv-common.c
+#     )
 
-set(UV_WIN32_SRCS
-    ../../dep/uv/src/win/thread.c
-    ../../dep/uv/src/win/util.c
-    ../../dep/uv/src/win/winapi.c
-    )
+# set(UV_WIN32_SRCS
+#     ../../dep/uv/src/win/thread.c
+#     ../../dep/uv/src/win/util.c
+#     ../../dep/uv/src/win/winapi.c
+#     )
 
-set(UV_POSIX_SRCS
-    ../../dep/uv/src/unix/thread.c
-    )
-if(WIN32)
-    set(UV_SRCS ${UV_WIN32_SRCS} ${UV_COMMON_SRCS})
-else()
- if(APPLE)
-        set(UV_SRCS
-			../../dep/uv/src/unix/darwin.c
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        set(UV_SRCS
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			../../dep/uv/src/unix/linux-core.c
-			)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-        set(UV_SRCS
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-        set(UV_SRCS
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-        set(UV_SRCS
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			)
-     elseif(CMAKE_SYSTEM_NAME STREQUAL "DragonFly")
-        set(UV_SRCS
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			)
-	elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        set(UV_SRCS
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "solaris")
-        set(UV_SRCS
-            ${UV_POSIX_SRCS}
-            ${UV_COMMON_SRCS}
-			)
-    endif()
-endif()
+# set(UV_POSIX_SRCS
+#     ../../dep/uv/src/unix/thread.c
+#     )
+
+# Remove UV platform specific source files
+# if(WIN32)
+#     set(UV_SRCS ${UV_WIN32_SRCS} ${UV_COMMON_SRCS})
+# else()
+#  if(APPLE)
+#         set(UV_SRCS
+# 			../../dep/uv/src/unix/darwin.c
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			)
+#     elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+#         set(UV_SRCS
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			../../dep/uv/src/unix/linux-core.c
+# 			)
+#     elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+#         set(UV_SRCS
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			)
+#     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+#         set(UV_SRCS
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			)
+#     elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+#         set(UV_SRCS
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			)
+#      elseif(CMAKE_SYSTEM_NAME STREQUAL "DragonFly")
+#         set(UV_SRCS
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			)
+# 	elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
+#         set(UV_SRCS
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			)
+#     elseif(CMAKE_SYSTEM_NAME STREQUAL "solaris")
+#         set(UV_SRCS
+#             ${UV_POSIX_SRCS}
+#             ${UV_COMMON_SRCS}
+# 			)
+#     endif()
+# endif()
+
 set(core_src	core/os.cpp
 				core/stringfun.cpp
 				core/exception.cpp
@@ -116,9 +121,9 @@ if(ANDROID)
 set(core_src ${core_src} core/android_native_app_glue.c)
 endif()
 if(share_library)
-	tng_shared_library(core ${core_src} ${UV_SRCS} ${core_head})
+	tng_shared_library(core ${core_src} ${core_head})
 else()
-	tng_library(core ${core_src} ${UV_SRCS} ${core_head})
+	tng_library(core ${core_src} ${core_head})
 endif()
 target_link_libraries(core liblz4)
 if(Jemalloc_FOUND)

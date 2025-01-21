@@ -1,5 +1,13 @@
-#ifndef __TNG_GFX_MAC_H__
-#define __TNG_GFX_MAC_H__
+#pragma once
+
+#include "core/platform.h"
+
+#ifdef EMCC
+// EMCC-specific macros and definitions
+#else
+// Standard platform macros and definitions
+#endif
+
 #include "core/arch_detect.h"
 #include "core/types.h"
 #include "core/runtime_check.h"

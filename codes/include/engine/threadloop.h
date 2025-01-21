@@ -2,7 +2,6 @@
 #include "core/os.h"
 #include "engine/engine_macros.h"
 #include "core/refobject.h"
-#include "uv/include/uv.h"
 #include "core/threadfun.h"
 #include <unordered_map>
 
@@ -25,10 +24,10 @@ namespace tng
 		Loop();
 		virtual ~Loop();
 		virtual bool		Create();
-		virtual void		Destory();
+		virtual void		Destroy();
 		virtual void		Start();
 
-		void				DestoryNextFrame(){destory_ = true;}
+		void				DestoryNextFrame(){destroy_ = true;}
 		void				WaitThreadEnd();
 		void				Update(void*);
 		void				AddService(const string& service_name, Service* service);
@@ -39,7 +38,7 @@ namespace tng
 		tick_t						lastUpdateTime_;
 		void						createThread();
 		Thread*						work_thread_;
-		AtomicCounter				destory_;
+		AtomicCounter				destroy_;
 		ServiceMap					service_map_;
 		Mutex						service_lock_;
 		std::vector<string>	deletelist_;

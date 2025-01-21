@@ -9,14 +9,14 @@
 
 namespace tng {
 	Loop::Loop():
-		destory_(false),
+		destroy_(false),
 		work_thread_(NULL)
 	{
 		lastUpdateTime_ = Clock::Tick();
 	}
 	Loop::~Loop()
 	{
-		Destory();
+		Destroy();
 	}
   
 	bool Loop::Create()
@@ -30,10 +30,10 @@ namespace tng {
 			work_thread_->Join();
 		}
 	}
-	void Loop::Destory()
+	void Loop::Destroy()
 	{
 		service_lock_.lock();
-		destory_ = true;
+		destroy_ = true;
 
 		WaitThreadEnd();
 		for (ServiceMap::iterator it = service_map_.begin(); it != service_map_.end(); it++)
@@ -46,12 +46,16 @@ namespace tng {
 	}
 	void Loop::Start()
 	{
-		createThread();
+		if (!started_)
+		{
+			started_ = true;
+			thread_ = std::thread(&Loop::Run, this);
+		}
 	}
 	void Loop::Update(void*)
 	{
 		service_lock_.lock();
-		while(!destory_&&service_map_.size())
+		while(!destroy_&&service_map_.size())
 		{
 			service_lock_.unlock();
 			service_lock_.lock();
@@ -100,7 +104,7 @@ namespace tng {
 				OS::Sleep((f32)sleeptitme);
 			lastUpdateTime_ = prethistime;
 		}
-		//thread exiting call Sevice::OnDestroy
+		//thread exiting call Service::OnDestroy
 		for (ServiceMap::iterator it= service_map_.begin();it!=service_map_.end();it++)
 		{
 			Service *serv = it->second;
@@ -113,7 +117,7 @@ namespace tng {
 				UpdateableService* updateserv = (UpdateableService*)serv;
 #endif
 				{
-					updateserv->OnDestory();
+					updateserv->OnDestroy();
 				}
 				delete updateserv;
 			}
@@ -154,15 +158,11 @@ namespace tng {
 		Update(NULL);
 	}
 
-//	bool DefaultLoop::Create()
-//	{
-//#ifndef TNG_NO_UVLOOP
-//		if (internal_loop_)
-//			throw ApplicationException("Engine exception","loop has been exist");
-//		internal_loop_ = uv_default_loop();
-//		return internal_loop_?true:false;
-//#else
-//		return true;
-//#endif
-//	}
+	void Loop::Init()
+	{
+		if (!initialized_)
+		{
+			initialized_ = true;
+		}
+	}
 }

@@ -20,3 +20,4 @@
 /Windows_x86_64_vc14_Debug_lib/engine.exp
 /Windows_x86_64_vc14_Debug_lib/core.lib
 /Windows_x86_64_vc14_Debug_lib/core.exp
+build/*

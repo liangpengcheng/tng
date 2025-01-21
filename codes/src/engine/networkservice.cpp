@@ -1,323 +1,351 @@
-/*
-#include "MathGeoLib/Algorithm/Random/LCG.h"
 #include "engine/networkservice.h"
 #include "engine/engine.h"
 #include "core/log.h"
+
 namespace tng
 {
-	static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
-		char* buf = new char[suggested_size];
-		return uv_buf_init(buf, sizeof suggested_size);
+	TcpClient::TcpClient() : socket_(INVALID_SOCKET), is_connected_(false) {
+		read_buffer_.resize(BUFFER_SIZE);
 	}
 
-	static void ClientReadCB(uv_stream_t* tcp, ssize_t nread, uv_buf_t buf) {
-		Assert(tcp != NULL);
-		TcpClient* client =(TcpClient*)tcp->data;
-		if (nread >= 0) {
-			
-			client->_onMessage(buf.base,u32(nread));
-			delete []buf.base;
-		}
-		else {
-			Log::GetLog()->Printf(Log::WARNING_CHN,"server error:%s",uv_err_name(uv_last_error(tcp->loop)));
-			client->_onLost();
-		}
+	TcpClient::~TcpClient() {
+		Destroy();
 	}
 
-	TcpClient::TcpClient()
-	{
-
-	}
-	TcpClient::~TcpClient(){
-
-	}
-
-	void OnCloseTcp(uv_handle_t* handle)
-	{
-		uv_tcp_t* timer = (uv_tcp_t*)handle;
-		delete timer;
-	}
-
-	void TcpClient::Destroy()
-	{
-#ifndef TNG_NO_UVLOOP
-		if (internal_handle_)
-			uv_close(internal_handle_, OnCloseTcp);
-		internal_handle_ = NULL;
+	void TcpClient::Destroy() {
+		if (socket_ != INVALID_SOCKET) {
+#ifdef TNG_OS_FAMILY_WINDOWS
+			closesocket(socket_);
+#else
+			close(socket_);
 #endif
+			socket_ = INVALID_SOCKET;
+		}
+		is_connected_ = false;
 	}
-	bool TcpClient::Initialize(Loop* loop)
-	{
-		uv_tcp_t* tcp = new uv_tcp_t;
-		internal_handle_ = reinterpret_cast<uv_handle_t*>(tcp);
 
-		int r = uv_tcp_init(loop->_getInternalLoop(), tcp);
-
-		internal_handle_->data = this;
-		return r == 0;
+	bool TcpClient::Initialize(Loop* loop) {
+#ifdef TNG_OS_FAMILY_WINDOWS
+		WSADATA wsaData;
+		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+			return false;
+		}
+#endif
+		return true;
 	}
-	void TcpClient::_onMessage(char* buf,u32 len)
-	{
-		if (on_message_)
-		{
-			on_message_(buf,len);
+
+	bool TcpClient::Connect(const char* ip, const u16 port) {
+		socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (socket_ == INVALID_SOCKET) {
+			return false;
+		}
+
+		struct sockaddr_in addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+		addr.sin_addr.s_addr = inet_addr(ip);
+
+		if (connect(socket_, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+			Destroy();
+			return false;
+		}
+
+		// Set non-blocking mode
+#ifdef TNG_OS_FAMILY_WINDOWS
+		u_long mode = 1;
+		ioctlsocket(socket_, FIONBIO, &mode);
+#else
+		int flags = fcntl(socket_, F_GETFL, 0);
+		fcntl(socket_, F_SETFL, flags | O_NONBLOCK);
+#endif
+
+		is_connected_ = true;
+		_onConnected();
+		return true;
+	}
+
+	bool TcpClient::Connect6(const char* ip, const u16 port) {
+		socket_ = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+		if (socket_ == INVALID_SOCKET) {
+			return false;
+		}
+
+		struct sockaddr_in6 addr;
+		memset(&addr, 0, sizeof(addr));
+		addr.sin6_family = AF_INET6;
+		addr.sin6_port = htons(port);
+		inet_pton(AF_INET6, ip, &addr.sin6_addr);
+
+		if (connect(socket_, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+			Destroy();
+			return false;
+		}
+
+		// Set non-blocking mode
+#ifdef TNG_OS_FAMILY_WINDOWS
+		u_long mode = 1;
+		ioctlsocket(socket_, FIONBIO, &mode);
+#else
+		int flags = fcntl(socket_, F_GETFL, 0);
+		fcntl(socket_, F_SETFL, flags | O_NONBLOCK);
+#endif
+
+		is_connected_ = true;
+		_onConnected();
+		return true;
+	}
+
+	void TcpClient::Disconnect() {
+		Destroy();
+	}
+
+	bool TcpClient::SendMessage(char* buf, u32 len) {
+		if (!is_connected_) return false;
+
+		int sent = send(socket_, buf, len, 0);
+		if (sent < 0) {
+#ifdef TNG_OS_FAMILY_WINDOWS
+			int error = WSAGetLastError();
+			if (error != WSAEWOULDBLOCK) {
+#else
+			if (errno != EWOULDBLOCK && errno != EAGAIN) {
+#endif
+				_onLost();
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void TcpClient::_onMessage(char* buf, u32 len) {
+		if (on_message_) {
+			on_message_(buf, len);
 		}
 	}
-	void TcpClient::_onLost()
-	{
-		if (on_lost_)
-		{
+
+	void TcpClient::_onLost() {
+		if (on_lost_) {
 			on_lost_();
 		}
 	}
-	void afterConnect(uv_connect_t* req, int status)
-	{
-		TcpClient* client = (TcpClient*)req->data;
-		if (status == 0)
-		{
-			int r = uv_read_start(req->handle, alloc_cb, ClientReadCB);
-			client->_onConnected();
-		}
-		else
-		{
-			Log::GetLog()->Printf(Log::ERROR_CHN, "connect failed:%s",uv_strerror(uv_last_error(req->handle->loop)));
-		}
-		//r = uv_shutdown(&client->shutdown_req_, req->handle, ShutDownCB);
+
+	TcpPeer::TcpPeer() : socket_(INVALID_SOCKET), server_(NULL), user_data_(NULL) {
 	}
-	void afterWrite(uv_write_t* req, int status)
-	{
-		//delete []req->write_buffer.base;
-		delete req;
-	}
-	bool TcpClient::Connect(const char* ip,const u16 port)
-	{
-		sockaddr_in address = uv_ip4_addr(ip, port);
-		uv_tcp_t* tcp = (uv_tcp_t*)internal_handle_;
-		int r = uv_tcp_connect(&req_, tcp, address,
-			afterConnect);
-		req_.data = this;
-		return r==0;
-	}
-	void TcpClient::Disconnect()
-	{
-		Destroy();
-	}
-	bool TcpClient::Connect6(const char* ip,const u16 port)
-	{
-		sockaddr_in6  address = uv_ip6_addr(ip, port);
-		uv_tcp_t* tcp = (uv_tcp_t*)internal_handle_;
-		int r = uv_tcp_connect6(&req_, tcp, address,
-			afterConnect);
-		req_.data = this;
-		return r==0;
-	}
-	bool TcpClient::SendMessage(char* buf,u32 len)
-	{
-		uv_write_t* req = new uv_write_t;
-		uv_buf_t buffer = uv_buf_init(buf, len);
-		int r = uv_write(req,req_.handle,&buffer,1,afterWrite);
-		return r==0;
-	}
-	static void close_cb(uv_handle_t* handle) {
-		delete handle;
-	}
-	TcpPeer::TcpPeer() :server_(NULL), user_data_(NULL){}
-	TcpPeer::~TcpPeer()
-	{
-		uv_close((uv_handle_t*)(tcp_), close_cb);
-	}
-	void TcpPeer::OnShutdown()
-	{
-		if (server_)
-		{
-			server_->_onShutDown(this);
+
+	TcpPeer::~TcpPeer() {
+		if (socket_ != INVALID_SOCKET) {
+#ifdef TNG_OS_FAMILY_WINDOWS
+			closesocket(socket_);
+#else
+			close(socket_);
+#endif
 		}
 	}
-	void TcpPeer::OnConnected()
-	{
-		if (server_)
-		{
+
+	void TcpPeer::OnConnected() {
+		if (server_) {
 			server_->_onPeerConnect(this);
 		}
 	}
 
-	std::string TcpPeer::GetPeerKey()
-	{
-		struct sockaddr_storage  address;
-		int namelen = sizeof(address);
-		int family;
-		int port;
-		char ip[INET6_ADDRSTRLEN];
-		if (uv_tcp_getpeername(tcp_, (sockaddr*)(&address), &namelen) != -1)
-		{
-			family = address.ss_family;
-			if (family == AF_INET) {
-				struct sockaddr_in* addrin = (struct sockaddr_in*)&address;
-				uv_inet_ntop(AF_INET, &(addrin->sin_addr), ip, INET6_ADDRSTRLEN);
-				port = ntohs(addrin->sin_port);
-			}
-			else if (family == AF_INET6) {
-				struct sockaddr_in6* addrin6 = (struct sockaddr_in6*)&address;
-				uv_inet_ntop(AF_INET6, &(addrin6->sin6_addr), ip, INET6_ADDRSTRLEN);
-				port = ntohs(addrin6->sin6_port);
-			}
+	void TcpPeer::OnShutdown() {
+		if (server_) {
+			server_->_onShutDown(this);
+		}
+	}
 
-			return str(format("%s:%d") % ip%port);
+	std::string TcpPeer::GetPeerKey() {
+		char ip[INET6_ADDRSTRLEN];
+		struct sockaddr_storage addr;
+		socklen_t len = sizeof(addr);
+
+		if (getpeername(socket_, (struct sockaddr*)&addr, &len) == 0) {
+			if (addr.ss_family == AF_INET) {
+				struct sockaddr_in* s = (struct sockaddr_in*)&addr;
+				inet_ntop(AF_INET, &s->sin_addr, ip, sizeof(ip));
+				return str(format("%s:%d") % ip % ntohs(s->sin_port));
+			} else if (addr.ss_family == AF_INET6) {
+				struct sockaddr_in6* s = (struct sockaddr_in6*)&addr;
+				inet_ntop(AF_INET6, &s->sin6_addr, ip, sizeof(ip));
+				return str(format("%s:%d") % ip % ntohs(s->sin6_port));
+			}
 		}
 		return "";
 	}
 
-	void TcpPeer::SendMessage(char* data, int len)
-	{
-		uv_write_t* req = new uv_write_t;
-		uv_buf_t buffer = uv_buf_init(data,len);
-		int r = uv_write(req, (uv_stream_t*)tcp_, &buffer, 1, afterWrite);
+	void TcpPeer::SendMessage(char* data, int len) {
+		send(socket_, data, len, 0);
 	}
 
-	TcpServer::TcpServer()
-	{
-
+	TcpServer::TcpServer() : listen_socket_(INVALID_SOCKET) {
 	}
-	void TcpServer::Destroy()
-	{
-#ifndef TNG_NO_UVLOOP
 
-		if (internal_handle_)
-			uv_close(internal_handle_, OnCloseTcp);
-		internal_handle_ = NULL;
+	void TcpServer::Destroy() {
+		if (listen_socket_ != INVALID_SOCKET) {
+#ifdef TNG_OS_FAMILY_WINDOWS
+			closesocket(listen_socket_);
+#else
+			close(listen_socket_);
 #endif
-	}
-	bool TcpServer::Initialize(Loop* loop)
-	{
-		uv_tcp_t* tcp = new uv_tcp_t;
-		internal_handle_ = reinterpret_cast<uv_handle_t*>(tcp);
+			listen_socket_ = INVALID_SOCKET;
+		}
 
-		int r = uv_tcp_init(loop->_getInternalLoop(), tcp);
-		Assert(r == 0);
-		r = uv_tcp_keepalive(tcp, 1, 60);
-		Assert(r == 0);
-		internal_handle_->data= this;
-		return r == 0;
+		for (TcpPeer* peer : peers_) {
+			delete peer;
+		}
+		peers_.clear();
 	}
 
-
-	bool TcpServer::Listen(const char* ip,const u16 port)
-	{
-		struct sockaddr_in address = uv_ip4_addr(ip, port);
-
-		uv_tcp_t* tcp = (uv_tcp_t*)internal_handle_;
-
-		int r = uv_tcp_bind(tcp, address);
-	
-		if (r!=0)
-		{
+	bool TcpServer::Initialize(Loop* loop) {
+#ifdef TNG_OS_FAMILY_WINDOWS
+		WSADATA wsaData;
+		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 			return false;
 		}
-		if (_listen())
-		{
-			Log::GetLog()->Printf(Log::SYS_CHN,"listen at %s:%d",ip,port);
-			return true;
-		}
-		else
-		{
-			Log::GetLog()->Printf(Log::ERROR_CHN,"listen failed at %s:%d:%s",ip,port,uv_strerror(uv_last_error(tcp->loop)));
+#endif
+		return true;
+	}
+
+	bool TcpServer::Listen(const char* ip, const u16 port) {
+		listen_socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (listen_socket_ == INVALID_SOCKET) {
 			return false;
 		}
-		
-	}
-	bool TcpServer::Listen6(const char* ip,const u16 port)
-	{
-		struct sockaddr_in6 address = uv_ip6_addr(ip, port);
 
-		uv_tcp_t* tcp = (uv_tcp_t*)internal_handle_;
+		// Enable address reuse
+		int opt = 1;
+		setsockopt(listen_socket_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
 
-		int r = uv_tcp_bind6(tcp, address);
-	
-		if (r!=0)
-		{
+		struct sockaddr_in addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+		addr.sin_addr.s_addr = inet_addr(ip);
+
+		if (bind(listen_socket_, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+			Destroy();
 			return false;
 		}
-		
-		return _listen();
-	}
-	static void OnTcpPeerRead(uv_stream_t* stream, ssize_t nread, uv_buf_t buf)
-	{
-		TcpPeer* client= (TcpPeer*)stream->data;
-		if (nread>0)
-		{
-			Assert(client);
-			Assert(client->server_);
-			client->server_->_onMessage(client,buf.base,u32(nread));
+
+		if (listen(listen_socket_, SOMAXCONN) != 0) {
+			Destroy();
+			return false;
 		}
-		else
-		{
-			///fix it
-			if (uv_last_error(stream->loop).code != UV_EAGAIN)
-			{
-				if(uv_last_error(stream->loop).code != UV_ECONNRESET &&
-					uv_last_error(stream->loop).code != UV_EOF)
-				{
-					Log::GetLog()->Printf(Log::ERROR_CHN,"%s",uv_strerror(uv_last_error(stream->loop)));
-				}
-				client->OnShutdown();
-			}
-			
-			//uv_close((uv_handle_t*)stream,NULL);
+
+		// Set non-blocking mode
+#ifdef TNG_OS_FAMILY_WINDOWS
+		u_long mode = 1;
+		ioctlsocket(listen_socket_, FIONBIO, &mode);
+#else
+		int flags = fcntl(listen_socket_, F_GETFL, 0);
+		fcntl(listen_socket_, F_SETFL, flags | O_NONBLOCK);
+#endif
+
+		Log::GetLog()->Printf(Log::SYS_CHN, "listening at %s:%d", ip, port);
+		return true;
+	}
+
+	bool TcpServer::Listen6(const char* ip, const u16 port) {
+		listen_socket_ = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+		if (listen_socket_ == INVALID_SOCKET) {
+			return false;
 		}
-		if (buf.len&&buf.base)
-			delete []buf.base;
+
+		// Enable address reuse
+		int opt = 1;
+		setsockopt(listen_socket_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
+
+		struct sockaddr_in6 addr;
+		memset(&addr, 0, sizeof(addr));
+		addr.sin6_family = AF_INET6;
+		addr.sin6_port = htons(port);
+		inet_pton(AF_INET6, ip, &addr.sin6_addr);
+
+		if (bind(listen_socket_, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+			Destroy();
+			return false;
+		}
+
+		if (listen(listen_socket_, SOMAXCONN) != 0) {
+			Destroy();
+			return false;
+		}
+
+		// Set non-blocking mode
+#ifdef TNG_OS_FAMILY_WINDOWS
+		u_long mode = 1;
+		ioctlsocket(listen_socket_, FIONBIO, &mode);
+#else
+		int flags = fcntl(listen_socket_, F_GETFL, 0);
+		fcntl(listen_socket_, F_SETFL, flags | O_NONBLOCK);
+#endif
+
+		Log::GetLog()->Printf(Log::SYS_CHN, "listening at [%s]:%d", ip, port);
+		return true;
 	}
-	static void OnConnection(uv_stream_t* handle, int status)
-	{
-		TcpPeer* client= new TcpPeer;
-		TcpServer* server = (TcpServer*)handle->data;
-		client->tcp_ = new uv_tcp_t;
-		//LCG lcg;
-		//int i = lcg.Int(0,server->ThreadNumber()-1);
-		//std::string name = str(format("TcpServerThread%d")%i);
-		//Loop* loop = Engine::GetInstance()->GetLoop(name);
-		Assert(uv_tcp_init(handle->loop, client->tcp_)==0);
-		client->tcp_->data = client;
-		client->server_ = server;
-		int r = uv_accept(handle, (uv_stream_t*)client->tcp_);
-		r = uv_read_start((uv_stream_t*)(client->tcp_), alloc_cb, OnTcpPeerRead);
-		client->OnConnected();
-		Assert(r==0);
+
+	void TcpServer::_onMessage(TcpPeer* peer, char* buf, u32 len) {
+		if (on_peer_msg_) {
+			on_peer_msg_(peer, buf, len);
+		}
 	}
-	void TcpServer::_onPeerConnect(TcpPeer* peer)
-	{
-		if (on_connect_)
-		{
+
+	void TcpServer::_onShutDown(TcpPeer* peer) {
+		if (on_shut_down_) {
+			on_shut_down_(peer);
+		}
+		auto it = std::find(peers_.begin(), peers_.end(), peer);
+		if (it != peers_.end()) {
+			peers_.erase(it);
+			delete peer;
+		}
+	}
+
+	void TcpServer::_onPeerConnect(TcpPeer* peer) {
+		if (on_connect_) {
 			on_connect_(peer);
 		}
 	}
-	void TcpServer::_onMessage(TcpPeer* peer,char* buf,u32 len)
-	{
-		if (on_peer_msg_)
-		{
-			on_peer_msg_(peer,buf,len);
+
+	bool TcpServer::_listen() {
+		if (listen_socket_ == INVALID_SOCKET) {
+			return false;
 		}
-	}
-	void TcpServer::_onShutDown(TcpPeer* peer)
-	{
-		if (on_shut_down_)
-		{
-			on_shut_down_(peer);
+
+		struct sockaddr_storage client_addr;
+		socklen_t client_len = sizeof(client_addr);
+		
+#ifdef TNG_OS_FAMILY_WINDOWS
+		SOCKET client_socket = accept(listen_socket_, (struct sockaddr*)&client_addr, &client_len);
+#else
+		int client_socket = accept(listen_socket_, (struct sockaddr*)&client_addr, &client_len);
+#endif
+
+		if (client_socket == INVALID_SOCKET) {
+#ifdef TNG_OS_FAMILY_WINDOWS
+			if (WSAGetLastError() != WSAEWOULDBLOCK) {
+#else
+			if (errno != EWOULDBLOCK && errno != EAGAIN) {
+#endif
+				return false;
+			}
+			return true;
 		}
-		delete peer;
+
+		// Set non-blocking mode for client socket
+#ifdef TNG_OS_FAMILY_WINDOWS
+		u_long mode = 1;
+		ioctlsocket(client_socket, FIONBIO, &mode);
+#else
+		int flags = fcntl(client_socket, F_GETFL, 0);
+		fcntl(client_socket, F_SETFL, flags | O_NONBLOCK);
+#endif
+
+		TcpPeer* peer = new TcpPeer();
+		peer->socket_ = client_socket;
+		peer->server_ = this;
+		peers_.push_back(peer);
+		peer->OnConnected();
+
+		return true;
 	}
-	bool TcpServer::_listen()
-	{
-		int r = uv_listen((uv_stream_t*)internal_handle_, 1, OnConnection);
-		internal_handle_->data = this;
-		return r==0;
-	}
-
-
-	START_SUB_CLASS(TcpClient,UVService)
-	END_CLASS
-
-	START_SUB_CLASS(TcpServer,UVService)
-	END_CLASS
 }
-*/

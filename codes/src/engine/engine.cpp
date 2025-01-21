@@ -124,6 +124,14 @@ namespace tng
 	{
 		GetDefaultLoop()->Start();
 	}
+	void Engine::Destroy()
+	{
+		if (loop_)
+		{
+			loop_->Destroy();
+			SAFE_DELETE(loop_);
+		}
+	}
 // 	static void work_cb(uv_work_t* req) {
 // 		Task* task = (Task*)req->data;
 // 		task->Request();

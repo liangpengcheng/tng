@@ -1,51 +1,39 @@
-#ifndef _TNG_THREAD_POOL_H_
-#define _TNG_THREAD_POOL_H_
-#include "engine/engine_macros.h"
-#include "core/threadfun.h"
+#pragma once
 #include <vector>
-#include <list>
-namespace tng
-{
-	class ENGINE_API Task
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
+#include <queue>
+#include "core/types.h"
+
+namespace tng {
+
+	class ThreadPool
 	{
 	public:
-		virtual ~Task(){}
-		virtual void Request()=0;
-		virtual void Response() = 0;
+		ThreadPool() : quit_(false), thread_count_(0) {}
+		~ThreadPool() { Destroy(); }
+
+		void Create(int thread_count = 0);
+		void Destroy();
+		void Quit() { quit_ = true; }
+
+		void AddTask(std::function<void()> t);
+		bool HasTask();
+		void WaitForDone();
+
+	private:
+		void Run();
+
+		std::vector<std::thread> threads_;
+		std::mutex task_lock_;
+		std::condition_variable task_cond_;
+		std::vector<std::function<void()>> task_;
+		std::mutex done_lock_;
+		std::condition_variable done_cond_;
+		bool quit_;
+		int thread_count_;
 	};
-	// use thread pool do task
-	//ENGINE_FUNC_API void DoTask(Task* task,const std::string& loop_name);
 
-	class ENGINE_API ThreadPool
-	{
-	public:
-		ThreadPool(){
-			active_=1;
-		}
-		~ThreadPool();
-		/**
-			create thread pool
-			@param num thread num
-		*/
-		void Initialize(s32 num);
-
-		void Quit(){active_ = false;}
-
-		void AddTask(Task* t);
-
-		void UpdateDoneList();
-	protected:
-		static void asyncTask(void*);
-		std::vector<Thread*>		threads_;
-		std::list<Task*>			task_;
-		std::list<Task*>			done_;
-		Mutex						task_lock_;
-		Mutex						done_lock_;
-#if !defined(NO_LIBUV)&&!defined(EMCC)
-		Condition					task_cond_;
-#endif
-		AtomicCounter				active_;
-	};
 }
-
-#endif

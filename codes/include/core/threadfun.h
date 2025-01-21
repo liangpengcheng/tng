@@ -1,23 +1,25 @@
 #pragma once
 #include "core_exports.h"
 #include "config.h"
-#ifndef NO_LIBUV
-extern "C"
-{
-#include "uv/include/uv.h"
-};
-#endif // !NO_LIBUV
-
-
 #include "types.h"
 #include "returncode.h"
-//#include "core/functor.h"
 #include "core/delegate.h"
 #include "core/memobj.h"
 
-
-#if TNG_OS== TNG_OS_MAC_OS_X
+#if TNG_OS == TNG_OS_MAC_OS_X
 #include <libkern/OSAtomic.h>
+#endif
+
+#ifdef TNG_OS_FAMILY_WINDOWS
+#include <windows.h>
+#elif defined(EMCC)
+#include <emscripten.h>
+#else
+#include <pthread.h>
+#include <semaphore.h>
+#if TNG_OS == TNG_OS_MAC_OS_X
+#include <mach/mach.h>
+#endif
 #endif
 
 namespace tng
@@ -26,10 +28,9 @@ namespace tng
 	{
 #ifdef TNG_OS_FAMILY_WINDOWS
 		typedef HANDLE tng_thread;
-
 		typedef HANDLE tng_sem;
-
 		typedef CRITICAL_SECTION tng_mutex;
+		typedef CONDITION_VARIABLE tng_cond;
 #elif defined(EMCC)
 		typedef int tng_thread;
 #else
@@ -40,13 +41,11 @@ namespace tng
 #endif
 		typedef pthread_t tng_thread;
 		typedef pthread_mutex_t tng_mutex;
-
-
-
-#endif // TNG_OS == TNG_OS_FAMILY_WINDOWS
-
-
+		typedef pthread_cond_t tng_cond;
+		typedef pthread_rwlock_t tng_rwlock;
+#endif
 	}
+
 	class NullLock :public MemObj
 	{
 	public:
@@ -59,68 +58,145 @@ namespace tng
 	{
 	public:
 		Mutex() {
-			uv_mutex_init(&mutex_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			InitializeCriticalSection(&mutex_);
+#else
+			pthread_mutex_init(&mutex_, NULL);
+#endif
 		}
 		~Mutex() {
-			uv_mutex_destroy(&mutex_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			DeleteCriticalSection(&mutex_);
+#else
+			pthread_mutex_destroy(&mutex_);
+#endif
 		}
 
 		void lock() {
-			uv_mutex_lock(&mutex_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			EnterCriticalSection(&mutex_);
+#else
+			pthread_mutex_lock(&mutex_);
+#endif
 		}
 		void unlock() {
-			uv_mutex_unlock(&mutex_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			LeaveCriticalSection(&mutex_);
+#else
+			pthread_mutex_unlock(&mutex_);
+#endif
 		}
-		uv_mutex_t  mutex_;
+	private:
+		private_::tng_mutex mutex_;
+		friend class Condition;
 	};
 	//#if !defined(NO_LIBUV)&&!defined(EMCC)
 	class CORE_API RWLock :public MemObj
 	{
 	public:
 		RWLock() {
-			uv_rwlock_init(&rwlock_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			InitializeSRWLock(&rwlock_);
+#else
+			pthread_rwlock_init(&rwlock_, NULL);
+#endif
 		}
 		~RWLock() {
-			uv_rwlock_destroy(&rwlock_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			// SRWLock doesn't need destruction
+#else
+			pthread_rwlock_destroy(&rwlock_);
+#endif
 		}
 		void rdlock() {
-			uv_rwlock_rdlock(&rwlock_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			AcquireSRWLockShared(&rwlock_);
+#else
+			pthread_rwlock_rdlock(&rwlock_);
+#endif
 		}
 		void rdunlock() {
-			uv_rwlock_rdunlock(&rwlock_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			ReleaseSRWLockShared(&rwlock_);
+#else
+			pthread_rwlock_unlock(&rwlock_);
+#endif
 		}
 		void wrlock() {
-			uv_rwlock_wrlock(&rwlock_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			AcquireSRWLockExclusive(&rwlock_);
+#else
+			pthread_rwlock_wrlock(&rwlock_);
+#endif
 		}
 		void wrunlock() {
-			uv_rwlock_wrunlock(&rwlock_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			ReleaseSRWLockExclusive(&rwlock_);
+#else
+			pthread_rwlock_unlock(&rwlock_);
+#endif
 		}
 	private:
-		uv_rwlock_t rwlock_;
+#ifdef TNG_OS_FAMILY_WINDOWS
+		SRWLOCK rwlock_;
+#else
+		private_::tng_rwlock rwlock_;
+#endif
 	};
 
 	class CORE_API Semaphore :public MemObj
 	{
 	public:
 		Semaphore(u32 val = 0) {
-			uv_sem_init(&semaphore_, val);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			semaphore_ = CreateSemaphore(NULL, val, INT_MAX, NULL);
+#elif TNG_OS == TNG_OS_MAC_OS_X
+			semaphore_create(mach_task_self(), &semaphore_, SYNC_POLICY_FIFO, val);
+#else
+			sem_init(&semaphore_, 0, val);
+#endif
 		}
 		~Semaphore() {
-			uv_sem_destroy(&semaphore_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			CloseHandle(semaphore_);
+#elif TNG_OS == TNG_OS_MAC_OS_X
+			semaphore_destroy(mach_task_self(), semaphore_);
+#else
+			sem_destroy(&semaphore_);
+#endif
 		}
 
 		void wait() {
-			uv_sem_wait(&semaphore_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			WaitForSingleObject(semaphore_, INFINITE);
+#elif TNG_OS == TNG_OS_MAC_OS_X
+			semaphore_wait(semaphore_);
+#else
+			sem_wait(&semaphore_);
+#endif
 		}
 		s32  trywait() {
-			return uv_sem_trywait(&semaphore_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			return WaitForSingleObject(semaphore_, 0) == WAIT_OBJECT_0 ? 0 : -1;
+#elif TNG_OS == TNG_OS_MAC_OS_X
+			mach_timespec_t interval = {0, 0};
+			return semaphore_timedwait(semaphore_, interval) == KERN_SUCCESS ? 0 : -1;
+#else
+			return sem_trywait(&semaphore_);
+#endif
 		}
 		void post() {
-			uv_sem_post(&semaphore_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			ReleaseSemaphore(semaphore_, 1, NULL);
+#elif TNG_OS == TNG_OS_MAC_OS_X
+			semaphore_signal(semaphore_);
+#else
+			sem_post(&semaphore_);
+#endif
 		}
 
 	private:
-		uv_sem_t semaphore_;
+		private_::tng_sem semaphore_;
 	};
 
 	class CORE_API Condition :public MemObj
@@ -128,25 +204,41 @@ namespace tng
 	public:
 		Condition()
 		{
-			uv_cond_init(&condition_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			InitializeConditionVariable(&condition_);
+#else
+			pthread_cond_init(&condition_, NULL);
+#endif
 		}
 
 		void notify_once()
 		{
-			uv_cond_signal(&condition_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			WakeConditionVariable(&condition_);
+#else
+			pthread_cond_signal(&condition_);
+#endif
 		}
 		void notify_all()
 		{
-			uv_cond_broadcast(&condition_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			WakeAllConditionVariable(&condition_);
+#else
+			pthread_cond_broadcast(&condition_);
+#endif
 		}
 		void wait(Mutex& mutex)
 		{
-			uv_cond_wait(&condition_, &mutex.mutex_);
+#ifdef TNG_OS_FAMILY_WINDOWS
+			SleepConditionVariableCS(&condition_, &mutex.mutex_, INFINITE);
+#else
+			pthread_cond_wait(&condition_, &mutex.mutex_);
+#endif
 		}
 
 
 	private:
-		uv_cond_t	condition_;
+		private_::tng_cond	condition_;
 	};
 	//#endif
 	template<typename lt>

@@ -1,5 +1,4 @@
 if(dependencies)
-subdirs(uv)
 if(build_unit_test)
 subdirs(gtest-1.6.0)
 endif(build_unit_test)
